@@ -78,7 +78,7 @@ function createMap(earthquakes) {
         maxZoom: 9,
         id: "satellite-streets-v11",
         accessToken: API_KEY
-    });
+    }).addTo(myMap);
 
     // baseMaps layer
     var baseMaps = {
