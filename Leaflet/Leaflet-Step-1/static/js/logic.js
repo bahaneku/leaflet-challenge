@@ -9,37 +9,59 @@ d3.json(usgsUrl, function(data) {
 function createFeatures(earthquakeData) {
     console.log(earthquakeData);
     function onEachFeature(feature, layer) {
-        layer.bindPopup("<h3" + feature.properties.place + "</h3><hr><p>" +new Date(feature.properties.time) + "</p>");
+        layer.bindPopup("<h3><hr><p>" + feature.properties.place + "</h3><hr><p>" + new Date(feature.properties.time) + "</h3><hr><p>" + feature.properties.mag + "</p>");
     }
     function radiusSize(magnitude) {
-        return magnitude * 2;
-    }
-
-    function circleColor(magnitude) {
+        console.log(magnitude);
         if (magnitude < 1) {
-            return "#fcbba1"
+            return magnitude*4
         }
         else if (magnitude < 2) {
-            return "#fc9272"
+            return magnitude*5
         }
         else if (magnitude < 3) {
-            return "#fb6a4a"
+            return magnitude*6
         }
         else if (magnitude < 4) {
-            return "#de2d26"
+            return magnitude*7
         }
         else if (magnitude < 5) {
-            return "#a50f15"
+            return magnitude*8
         }
         else {
-            return "#fee5d9"
+            return magnitude*3
+        }
+    }
+    
+
+    function circleColor(depth) {
+        console.log(depth);
+        if (depth > 1 && depth < 5) {
+            return "#fed976"
+        }
+        else if (depth > 5 && depth < 10) {
+            return "#feb24c"
+        }
+        else if (depth > 10 && depth < 15) {
+            return "#fd8d3c"
+        }
+        else if (depth > 15 && depth < 20) {
+            return "#f03b20"
+        }
+        else if (depth < 20) {
+            return "#bd0026"
+        }
+        else {
+            return "#ffffb2"
         }
 }
 
 function style (feature) {
     return {
+        color: "black",
+        weight: .5,
         radius: radiusSize(feature.properties.mag),
-        color: circleColor(feature.properties.mag),
+        fillColor: circleColor(feature.geometry.coordinates[2]),
         fillOpacity: 1
     }
 }
@@ -78,13 +100,22 @@ function createMap(earthquakes) {
         maxZoom: 9,
         id: "satellite-streets-v11",
         accessToken: API_KEY
-    }).addTo(myMap);
+    });
+
+    // Outdoors layer
+    var outdoors = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+        attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+        maxZoom: 10,
+        id: "outdoors-v11",
+        accessToken: API_KEY
+    });
 
     // baseMaps layer
     var baseMaps = {
         "Street Map": streetmap,
         "Dark Map": darkmap,
-        "Satellite": satellite
+        "Satellite": satellite,
+        "Outdoors": outdoors
     };
 
     // Overlay layer
@@ -106,18 +137,22 @@ function createMap(earthquakes) {
         collapsed: false
     }).addTo(myMap);
 
-    // // // Create a legend to display information about our map
-    // var legend = L.control({
-    //     position: "bottomright"
-    // });
+    var legend = L.control({ position: "bottomright" });
+    legend.onAdd = function () {
+        var div = L.DomUtil.create("div", "info legend");
+        var depth = ["<1", "1-5", "5-10", "10-15","15-20", ">20"];
+        var colors = ["#ffffb2", "#fed976", "#feb24c", "#fd8d3c", "#f03b20", "#bd0026"]
+        var labels = [];
 
-    // // // // When the layer control is added, insert a div with the class of "legend"
-    // legend.onAdd = function (map) {
-    //     var div = L.DomUtil.create("div", "info legend"),
-        // mags = [""];
-    //     return div;
-    // };
-    // // // Add the info legend to the map
-    // info.addTo(map);
+        // Insert legend to html
+        div.innerHTML
+        labels.push(`<p style="background-color: #e6ffff"><b> DEPTH (km) </b></p>`);
+        depth.forEach(function (depth, i) {
+            labels.push(`<ul style="background-color: ${colors[i]}">${depth} km </ul>`);
+        });
+        div.innerHTML += "<ul>" + labels.join("") + "</ul>";
+        return div;
+    };
+    // Adding legend to the map
+    legend.addTo(myMap);
 };
-
